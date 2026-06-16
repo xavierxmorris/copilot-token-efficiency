@@ -1,0 +1,22 @@
+{
+  "//": "Minimal MCP config — fewer servers/tools means fewer tool-definition tokens in EVERY request's system prompt.",
+  "//how": "Each MCP server injects its tool schemas into the model's context on every turn. Only enable what a session needs, and use a 'tools' allowlist to load a subset.",
+  "//tip": "Run /context in the CLI to see 'toolDefinitions' token cost. Disable unused servers with /mcp.",
+
+  "mcpServers": {
+    "context7": {
+      "type": "local",
+      "command": "npx",
+      "args": ["-y", "--prefer-offline", "@upstash/context7-mcp@3.1.0"],
+      "tools": ["resolve-library-id", "get-library-docs"]
+    },
+
+    "microsoft-learn": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp",
+      "//tools": "Optionally allowlist e.g. [\"microsoft_docs_search\", \"microsoft_docs_fetch\"] if you never use code-sample search, to trim tool defs."
+    },
+
+    "//bluebird-note": "Heavy code-search servers expose many tools. If you are not doing code-search in a session, comment the server out or remove it to reclaim context tokens."
+  }
+}

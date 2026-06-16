@@ -1,0 +1,10 @@
+# Local backups created by switch-profile.ps1
+*.bak-*
+settings.json.bak*
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/

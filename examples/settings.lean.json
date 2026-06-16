@@ -1,0 +1,20 @@
+{
+  "//": "LEAN profile — token-efficient everyday default.",
+  "//model": "Main agent runs a strong-but-cheaper model at medium effort. Big token savings vs Opus 4.8/max on routine work.",
+  "//subagents": "Subagents routed to the cheapest model that fits the job. 'explore' and 'task' are intentionally minimal.",
+  "//note": "Switch UP to settings.power.json only when a task genuinely needs maximum reasoning.",
+
+  "model": "claude-sonnet-4.6",
+  "effortLevel": "medium",
+  "contextTier": "default",
+
+  "subagents": {
+    "agents": {
+      "general-purpose": { "model": "gpt-5.5", "effortLevel": "medium" },
+      "research":        { "model": "gpt-5.5", "effortLevel": "medium" },
+      "code-review":     { "model": "gpt-5.5", "effortLevel": "high" },
+      "task":            { "model": "gpt-5-mini", "effortLevel": "low" },
+      "explore":         { "model": "gpt-5.4-mini", "effortLevel": "low" }
+    }
+  }
+}

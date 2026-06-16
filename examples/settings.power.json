@@ -1,0 +1,20 @@
+{
+  "//": "POWER profile — maximum capability. This is the documented default.",
+  "//model": "Main agent runs Opus 4.8 at MAX reasoning effort. Highest quality, highest token/$ cost.",
+  "//subagents": "Heavy subagents run GPT-5.5 at xhigh. 'explore' stays cheap because it is high-volume, low-stakes research.",
+  "//note": "These keys MERGE into your existing ~/.copilot/settings.json. Use scripts/switch-profile.ps1 to apply safely (it backs up first).",
+
+  "model": "claude-opus-4.8",
+  "effortLevel": "max",
+  "contextTier": "default",
+
+  "subagents": {
+    "agents": {
+      "general-purpose": { "model": "gpt-5.5", "effortLevel": "xhigh" },
+      "research":        { "model": "gpt-5.5", "effortLevel": "xhigh" },
+      "code-review":     { "model": "gpt-5.5", "effortLevel": "xhigh" },
+      "task":            { "model": "gpt-5.5", "effortLevel": "high" },
+      "explore":         { "model": "gpt-5.4-mini", "effortLevel": "medium" }
+    }
+  }
+}
