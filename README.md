@@ -85,6 +85,9 @@ copilot-token-efficiency/
 │   ├── settings.lean.json          # Token-efficient profile
 │   ├── mcp-config.minimal.json     # Trimmed MCP / tool allowlists
 │   └── copilot-instructions.md     # Context-discipline custom instructions
+├── demo/
+│   ├── demo-flow.md                # Live demo script — show the token save (VS Code + CLI)
+│   └── sample-repo/                # Runnable fixture (1 failing auth test, planted bug)
 └── scripts/
     ├── switch-profile.ps1          # Apply lean/power (with backup)
     ├── check-usage.ps1             # Token-posture dashboard (read-only)

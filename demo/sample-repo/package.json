@@ -1,0 +1,9 @@
+{
+  "name": "token-demo-scratch",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Demo fixture for demo/demo-flow.md — one failing auth test with a planted bug.",
+  "scripts": {
+    "test": "node --test"
+  }
+}
