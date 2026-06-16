@@ -176,7 +176,9 @@ recognize their own habits. Do the run in **VS Code**, then repeat the key beats
 
 - **VS Code:** drag the **entire scratch folder** into Chat (not a single file). Hover the ring.
   → Point out the jump.
-- **CLI:** `@.` (or add the whole directory) then `/context`. → Read the bigger history row.
+- **CLI:** add the whole fixture, then `/context`. If your build supports a folder mention use
+  that; otherwise mention each file explicitly:
+  `@README.md @package.json @src/auth/jwt.js @tests/auth.test.js` → read the bigger history row.
 
 ### A‑2 · Ask vaguely (invite the wrong turn)
 
@@ -232,10 +234,11 @@ and history are fresh). Now apply the guide.
 
 ### B‑3 · Recon with `explore` **before** editing — guide §A2 *(CLI strength)*
 
-Cheap, read‑only recon prevents the expensive wrong turn. Run it **before** any edit:
+Cheap, read‑only recon prevents the expensive wrong turn. Run it **before** any edit. Phrase it
+as a delegation *(confirm your build's exact agent‑invocation syntax beforehand)*:
 
 ```
-explore: explain how verifyJwt is used end-to-end. Cite file:line. Do NOT edit anything.
+Use the explore agent to explain how verifyJwt is used end-to-end. Cite file:line. Do NOT edit anything.
 ```
 
 → `/context` after: **main history barely moves** — the agent's file‑reading stayed in its own
@@ -243,7 +246,12 @@ window. (This is the beat the Naive run never gets.)
 
 ### B‑4 · Ground the ask (no room to hallucinate)
 
-Now the surgical fix prompt — same on both surfaces:
+Now the surgical fix prompt. The body is the same on both surfaces — only how you attach the two
+files differs:
+
+- **VS Code:** attach `src/auth/jwt.js` and `tests/auth.test.js` via **Add Context**, then paste
+  the prompt **without** the `@…` line.
+- **CLI:** keep the `@…` line as the first line.
 
 ```
 @src/auth/jwt.js @tests/auth.test.js
@@ -252,17 +260,19 @@ token.split(".", 1) drops the signature segment. Fix only verifyJwt in src/auth/
 test passes. Don't touch anything else. Done = `npm test` is green.
 ```
 
-### B‑5 · Verify with `task`, and show the contrast — guide §A2
+### B‑5 · Verify with `task`, capture, then show the contrast — guide §A2
 
-- **CLI:** after the edit, use **`task`** to run the tests:
-  `run npm test and report pass/fail; full output only on failure`.
-  → `/context`: history stays flat; the 5‑test output lived in the subagent.
-- **Contrast beat:** run the *same* `npm test` **inline** (no `task` agent) and show
-  `/context` / Chat Debug View jump. **That delta is the punchline.**
+1. **Verify (CLI):** delegate the test run so the verbose output stays out of main history:
+   `Use the task agent to run npm test and report pass/fail; full output only on failure.`
+   → `/context`: history stays flat; the 5‑test output lived in the subagent.
+2. **📸 Capture the Disciplined scoreboard NOW** (see [shot list](#7-screenshot-checklist-per-surface)) —
+   while main history is still clean, **before** the contrast beat below pollutes it.
+3. **Contrast beat (optional, after capturing):** run the *same* `npm test` **inline** (no `task`
+   agent) and show `/context` / Chat Debug View jump. **That delta is the punchline** — and
+   because you've already captured, the pollution doesn't taint your Run B numbers.
 
-> 📸 **Capture the Disciplined scoreboard now** (see [shot list](#7-screenshot-checklist-per-surface)).
-> Do it **before** the epilogue below — the next two steps deliberately change variables and bust
-> the cache, so they must not be inside the measured A/B comparison.
+> ⚠️ Then move to the epilogue below. The next two steps deliberately change variables and bust
+> the cache, so they must stay **out** of the measured A/B comparison.
 
 ---
 

@@ -22,5 +22,5 @@ test("verifyJwt rejects an empty token", () => {
 test("round-trips a signed token", () => {
   const token = signJwt({ sub: "u_123" });
   const claims = verifyJwt(token);
-  assert.strictEqual(claims?.sub, "u_123"); // the one that fails until the bug is fixed
+  assert.strictEqual(claims?.sub, "u_123");
 });
