@@ -1,98 +1,158 @@
 # Token-efficiency guide for GitHub Copilot CLI
 
 A practical, **validated** set of techniques to cut token consumption in the GitHub
-Copilot CLI, mapped to features that actually exist in the tool (verified against
-CLI **v1.0.63**). Every tip lists the real command/feature and why it saves tokens.
+Copilot CLI (verified against CLI **v1.0.63**), organised around one rule:
+
+> **Never trade away answer quality unless the trade is clearly worth it.**
+
+So the tips are split into two tiers:
+
+- **Tier A — Zero quality loss.** Same answers, fewer tokens. Use all of these, always.
+- **Tier B — Worth-it tradeoffs.** These *can* lower output quality; use them deliberately
+  where the savings outweigh the (often negligible) cost.
 
 > Sources (checked 2026‑06‑16):
 > - GitHub Copilot CLI docs — https://docs.github.com/en/copilot/how-tos/use-copilot-agents/use-copilot-cli
-> - Anthropic prompt caching — https://platform.claude.com/docs/en/build-with-claude/prompt-caching (cache hits bill at ~10% of input → up to 90% input savings; 5‑min default window)
-> - Feature names verified against the CLI's own `/help` and package on this machine.
+> - Anthropic prompt caching — https://platform.claude.com/docs/en/build-with-claude/prompt-caching
+> - OpenAI prompt caching — https://developers.openai.com/api/docs/guides/prompt-caching
+> - Settings schema + compaction constants verified from the CLI package on this machine.
+> - Recommendations validated by a GPT‑5.5 (xhigh) rubber-duck review.
 
 ---
 
 ## The mental model
 
-Every turn you pay for: **system prompt + tool definitions + conversation history + your message + the model's reasoning/output.** Token efficiency = keep each of those small and reuse the cacheable parts.
+Every turn you pay for: **tool definitions + system prompt + conversation history +
+your message + the model's reasoning/output.** There are two ways to spend less:
 
-| Cost bucket | Biggest lever |
-|---|---|
-| Reasoning/output | Model + **effort level** (Opus/`max` and GPT‑5.5/`xhigh` are the heaviest) |
-| Conversation history | `/compact`, `/new`, subagents (isolated context) |
-| Tool definitions | Number of MCP servers/tools loaded; use `tools` allowlists |
-| Repeated context | Prompt caching — keep stable context up front, don't restate it |
+1. **Pay less per token** (caching) and **spend fewer reasoning/output tokens** — *without
+   dropping any context*. ← Tier A, no quality loss.
+2. **Carry fewer/cheaper tokens** (smaller model, lower effort, summarised history). ←
+   Tier B, a quality tradeoff.
+
+| Cost bucket | Lever | Tier |
+|---|---|---|
+| Repeated input | **Prompt caching** — keep the prefix stable | A |
+| Conversation history | Subagents (isolated context); compaction | A / B |
+| Tool definitions | Trim **unused** MCP servers/tools | A |
+| Reasoning/output | Model + **effort level** | B |
 
 ---
 
-## 1. Right-size the model and effort (biggest lever)
+# Tier A — Zero quality loss
 
-Effort level multiplies reasoning tokens on **every** turn. Opus 4.8 at `max` and
-GPT‑5.5 at `xhigh` produce the best results and the largest bills.
+These change cost/latency only. The model's answer is **identical**.
 
-- **Do:** keep a lean default (`claude-sonnet-4.6` / `medium`, or `gpt-5.5` / `medium`) and switch up only for hard tasks.
-- **How:** `/model` to change model, `effortLevel` in `settings.json`, or `/model auto` to let Copilot pick.
-- Valid effort levels seen in the model list: `low, medium, high, xhigh` (GPT‑5.5) and `low, medium, high, xhigh, max` (Opus 4.8).
+## A1. Maximize prompt caching (the biggest free win)
 
-## 2. Offload to subagents (isolated context)
+Caching reuses your stable prefix at **~10% of input cost** (Anthropic) / up to **90% off**
+(OpenAI) — for the **exact same output** (both providers confirm output is unchanged).
 
-Subagents run in a **separate context window** and return only a summary — the verbose
-work never enters your main transcript.
+- Lock **model, effort, contextTier, MCP servers/tools, and instructions before you start** —
+  changing any of them mid-session busts the whole cache (prefix order is `tools → system → messages`).
+- **Front-load** large stable context with `@file` and reuse it; **append** new turns rather
+  than editing earlier ones (`/rewind`/`/undo` and `/compact` reset the cache).
+- Work in **bursts** — the cache goes cold after ~5–10 idle minutes (GPT‑5.5 keeps a 24h cache).
 
-- **`explore`** — codebase Q&A without polluting main context. Cheap model by default.
-- **`task`** — runs tests/builds/installs; returns "passed/failed" + full output only on failure.
-- **`research` / `general-purpose`** — heavier, separate context.
-- **How:** these are invoked automatically; route per-agent models via `subagents.agents.<name>` (see below).
+→ Full mechanics, pricing tables, and a checklist: [`prompt-caching.md`](prompt-caching.md).
 
-## 3. Compact and reset aggressively
+## A2. Offload verbose work to subagents
 
-- **`/compact`** — summarises conversation history to reclaim context tokens (optionally focus it: `/compact keep auth changes`).
-- **`/new`** — start a fresh conversation between unrelated tasks instead of dragging a bloated transcript.
-- **`/context`** — visualise current token usage by bucket (system, tool defs, history). Use it to find bloat.
-- **`/usage`** — session usage metrics.
+Subagents run in a **separate context window** and return only a summary, so noisy output
+never enters — or bloats — your main thread. The main answer keeps all the *relevant*
+information, so quality is preserved (often improved).
 
-## 4. Trim tool definitions
+- **`explore`** — codebase Q&A without polluting main context.
+- **`task`** — runs tests/builds/installs; returns pass/fail + full output only on failure.
+- **`research` / `general-purpose`** — heavier work in isolated context.
 
-Every enabled MCP server injects its tool schemas into the system prompt **on every turn**.
+## A3. Trim only the tool definitions you don't use
 
-- Use a `tools` allowlist per MCP server to load only the tools you use (see `examples/mcp-config.minimal.json`).
-- Disable servers you aren't using this session via `/mcp`.
-- Check the `toolDefinitions` line in `/context` to quantify the cost.
+Every enabled MCP server injects its tool schemas into the prefix **every turn**. Removing
+servers/tools you *won't* use this session costs you nothing in capability.
 
-## 5. Scope context precisely
+- Add a `tools` allowlist per server (see `examples/mcp-config.minimal.json`).
+- Disable unused servers via `/mcp`. Quantify the saving in `/context` (`toolDefinitions`).
+- ⚠️ Do this **before** the session starts — toggling `/mcp` mid-session also busts the cache (A1).
 
-- **`@path/to/file`** adds just that file — far cheaper than letting the agent read whole directories.
-- Ask for diffs/changed blocks, not whole files, in custom instructions.
-- Prefer the `explore` subagent over loading many files into the main thread.
+## A4. Scope context precisely with `@file`
 
-## 6. Spend zero tokens when you can
+Pointing at the exact file is **more** precise than letting the agent read whole
+directories — better grounding *and* fewer tokens.
 
-- **`!command`** runs a shell command directly with **no model call** (e.g. `!git status`). Free.
-- **Plan mode** (`Shift+Tab`) lets you agree the approach before the model writes code, avoiding expensive wrong turns.
+## A5. Spend zero tokens when you can
 
-## 7. Preserve the prompt cache
+- **`!command`** runs a shell command with **no model call** (e.g. `!git status`). Free.
+- **`/ask`** asks a one-off side question **without** adding it to history (keeps the cached
+  thread clean).
+- **Plan mode** (`Shift+Tab`) agrees the approach before code is written — avoids expensive wrong turns.
 
-Anthropic prompt caching reuses a stable prefix at ~10% of input cost. It's already on
-for this CLI (Anthropic messages API). To benefit:
+## A6. Keep max context the smart way (no forced compaction)
 
-- Keep stable context (instructions, files) **up front**; put the changing ask **last**.
-- Don't re-paste large blocks mid-session — edits before the cached prefix invalidate the cache.
-- Keep custom instructions concise and stable.
+You can hold a large window without dropping info:
 
-## 8. Concise, durable custom instructions
+- **`contextTier`** accepts `default` or `long_context`. Keep **`default`** until `/context`
+  shows you're approaching the window, then switch to **`long_context`** so larger inputs are
+  accepted before anything is summarised. *(Caveat: the long-context tier usually has a higher
+  per‑token price — use it when you genuinely need the room, not by default.)*
+- The CLI auto-compacts in the background at **~80%** of the token limit by default
+  (buffer exhaustion at 95%, default limit 128k). **Keep auto-compaction enabled** (disabling
+  it risks a hard truncation/stop at the limit). If you want it to retain more before
+  summarising, nudge the threshold to **~0.85–0.88** (not higher) and confirm via `/context`.
+- A concise, **stable** `copilot-instructions.md` steers every turn and stays cached (A1).
 
-A short `copilot-instructions.md` (see `examples/`) that enforces brevity and context
-discipline pays for itself every turn by preventing re-explanation and over-reading.
+---
+
+# Tier B — Worth-it tradeoffs (may lower quality)
+
+Use these deliberately. Each notes when it's worth it and when it isn't.
+
+## B1. Lower the effort level for routine work  ⭐ best tradeoff
+
+`effortLevel` multiplies reasoning tokens every turn. Dropping `xhigh → high` (or `medium`)
+**does** reduce reasoning depth — but on routine/mechanical work the quality difference is
+usually negligible while the savings are large.
+
+- **Worth it:** edits, refactors, lookups, boilerplate, summaries.
+- **Keep `xhigh`/`max` for:** tricky debugging, architecture, multi-step reasoning.
+- This is the single best place to save without touching context. Switch per task with `/model`.
+
+## B2. Use a cheaper model for low-stakes turns
+
+Smaller models (`gpt-5-mini`, `gemini-3.5-flash`, `gpt-5.4-mini`, `claude-haiku-4.5`) are
+far cheaper but less capable on hard problems.
+
+- **Worth it:** simple edits, file lookups, format conversions, quick questions.
+- **Not worth it:** complex reasoning, subtle bugs — keep Opus/GPT‑5.5 there.
+- Route per-subagent so grunt work goes cheap while the main agent stays strong (see profiles).
+
+## B3. Compact stale history manually
+
+`/compact` summarises history to reclaim tokens, but **loses nuance** and **resets the
+cache** (A1).
+
+- **Worth it:** the early transcript is genuinely stale and you're near the window.
+- **Not worth it:** mid-task with a hot cache — you'd pay to rebuild the prefix. Prefer A6
+  (long_context / threshold) to keep context instead.
+
+## B4. Accept earlier compaction instead of `long_context`
+
+Staying on `contextTier: default` and letting history compact sooner avoids the
+long-context tier's higher per-token price — at the cost of some summarised history.
+A cost-vs-fidelity trade; pick per session.
 
 ---
 
 ## Quick reference
 
-| Goal | Command / setting |
-|---|---|
-| See token usage | `/context`, `/usage` |
-| Shrink history | `/compact`, `/new` |
-| Cheaper turns | `/model`, `effortLevel`, `/model auto` |
-| Isolate verbose work | `explore` / `task` subagents |
-| Fewer tool tokens | `/mcp`, `tools` allowlist |
-| Free actions | `!shell`, plan mode |
-| Per-subagent routing | `subagents.agents.<name>` in `settings.json` |
+| Goal | Command / setting | Tier |
+|---|---|---|
+| See token / cache usage | `/context`, `/usage` | A |
+| Maximize caching | stable prefix; `@file`; bursts | A |
+| Isolate verbose work | `explore` / `task` subagents | A |
+| Fewer tool tokens | `/mcp`, `tools` allowlist (pre-session) | A |
+| Free actions | `!shell`, `/ask`, plan mode | A |
+| Keep max context | `contextTier: long_context` (when needed); threshold ~0.85–0.88 | A |
+| Cheaper turns | `/model`, `effortLevel` (high/medium for routine) | B |
+| Reclaim a stale window | `/compact` | B |
+| Per-subagent routing | `subagents.agents.<name>` in `settings.json` | A/B |

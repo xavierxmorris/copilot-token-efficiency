@@ -7,16 +7,29 @@ actually exist in the CLI (verified against **v1.0.63**), not generic advice.
 > Built and validated against `@xavierxmorris`'s setup on 2026‑06‑16. Sources cited in
 > [`docs/token-efficiency-guide.md`](docs/token-efficiency-guide.md).
 
+## Quality first
+
+The guide is split into two tiers so you never sacrifice answer quality by accident:
+
+- **Tier A — zero quality loss.** Same answers, fewer tokens. (Caching, subagents, scoped
+  `@file`, trimming unused tools, keeping max context smartly.)
+- **Tier B — worth-it tradeoffs.** May lower quality; use deliberately. (Lower effort for
+  routine work, cheaper model for low-stakes turns, compacting stale history.)
+
 ## TL;DR — the biggest levers
 
-1. **Effort level is everything.** Opus 4.8 `max` / GPT‑5.5 `xhigh` give the best answers and the biggest bills. Use a lean default; switch up on demand.
-2. **Offload to subagents** (`explore`, `task`) — they run in isolated context and return only summaries.
-3. **`/compact` and `/new`** to shrink history; **`/context`** to see where tokens go.
-4. **Trim MCP tool definitions** — every server loads its tools into context every turn.
-5. **Preserve the prompt cache** — keep stable context up front, don't restate it.
+1. **Maximize prompt caching (zero quality loss).** Cached input bills at **~10%** (Anthropic)
+   / up to **90% off** (OpenAI) for the **identical** output. Keep your prefix stable. See
+   [`docs/prompt-caching.md`](docs/prompt-caching.md).
+2. **Offload to subagents** (`explore`, `task`) — isolated context, summary-only return.
+3. **Keep max context the smart way** — `contextTier: long_context` only when needed; keep
+   auto-compaction on (threshold ~0.85–0.88), don't disable it.
+4. **Trim only *unused* MCP tool definitions** (before the session — toggling mid-session busts the cache).
+5. **Lower effort for routine work** (Tier B) — `xhigh → high/medium` saves the most reasoning tokens; keep `xhigh`/`max` for hard tasks.
 
-Full details: [`docs/token-efficiency-guide.md`](docs/token-efficiency-guide.md).
-Analysis of the reference setup: [`docs/your-setup-analysis.md`](docs/your-setup-analysis.md).
+Full details: [`docs/token-efficiency-guide.md`](docs/token-efficiency-guide.md) ·
+Caching deep dive: [`docs/prompt-caching.md`](docs/prompt-caching.md) ·
+Reference setup analysis: [`docs/your-setup-analysis.md`](docs/your-setup-analysis.md).
 
 ## Two switchable profiles
 
@@ -54,7 +67,8 @@ per‑agent `model` / `effortLevel` / `contextTier`. Valid agents:
 ```
 copilot-token-efficiency/
 ├── docs/
-│   ├── token-efficiency-guide.md   # The validated tips + sources
+│   ├── token-efficiency-guide.md   # Tier A (zero loss) + Tier B (tradeoffs)
+│   ├── prompt-caching.md           # Input-token caching deep dive + how to max it
 │   └── your-setup-analysis.md      # Findings for the reference setup
 ├── examples/
 │   ├── settings.power.json         # Opus 4.8 max + GPT-5.5 xhigh profile
