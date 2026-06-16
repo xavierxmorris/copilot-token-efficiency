@@ -38,31 +38,40 @@ Use a tiny, throwaway repo so the diff is legible from the back row. The task is
 realistic: **"fix the failing auth test."** It contains one planted bug and one planted
 ambiguity so the *Naive* run takes a believable wrong turn.
 
-> ✅ **It's already scaffolded** under [`sample-repo/`](sample-repo/) — three files, no
-> dependencies, runs on Node's built‑in `node --test` (Node 18+). For a live demo, copy it
-> outside this repo first so on‑stage edits don't dirty `copilot-token-efficiency`:
+> ✅ **It's already scaffolded** under [`sample-repo/`](sample-repo/) — four files, no
+> dependencies, runs on Node's built‑in `node --test` (Node 18+). The **answer key** is in
+> [`presenter-notes.md`](presenter-notes.md), kept *outside* the fixture on purpose (see the
+> [wrong‑turn note](#why-the-fixture-stays-spoiler-free) below). Copy the fixture **out** of
+> this repo first so on‑stage edits don't dirty it — run from the repo root:
 >
 > ```powershell
-> Copy-Item -Recurse demo/sample-repo "$env:TEMP/token-demo-scratch"
-> cd "$env:TEMP/token-demo-scratch"; npm test   # 1 failing — as designed
+> # from the repo root (…\copilot-token-efficiency)
+> $scratch = Join-Path $env:TEMP "token-demo-scratch"
+> Remove-Item -Recurse -Force $scratch -ErrorAction SilentlyContinue   # always start clean
+> Copy-Item -Recurse demo\sample-repo $scratch
+> Set-Location $scratch; npm test    # tests 5 / pass 4 / fail 1 — as designed
 > ```
+>
+> ⚠️ Run `switch-profile.ps1` and anything under `scripts\` **from the repo**, not from
+> `$scratch` (the fixture has no `scripts/`).
 
-The three files (shown here for reference — they live in [`sample-repo/`](sample-repo/)):
+The fixture files (shown here for reference — they live, spoiler‑free, in
+[`sample-repo/`](sample-repo/); the planted bug and fix are in
+[`presenter-notes.md`](presenter-notes.md)):
 
-**`src/auth/jwt.js`** — note the helper is `verifyJwt`, **not** `validateToken` (the planted trap):
+**`src/auth/jwt.js`** — the helper is `verifyJwt`; there is deliberately no `validateToken`:
 
 ```js
 // src/auth/jwt.js
-const SECRET = process.env.JWT_SECRET || "dev-secret";
+const SECRET = "dev-secret";
 
 function signJwt(payload) {
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
   return `${body}.${SECRET}`;
 }
 
-// BUG (planted): split limit of 1 drops the signature, so verification always fails.
 function verifyJwt(token) {
-  const [body, sig] = token.split(".", 1); // <-- planted bug: should be token.split(".")
+  const [body, sig] = token.split(".", 1);
   if (sig !== SECRET) return null;
   return JSON.parse(Buffer.from(body, "base64url").toString());
 }
@@ -70,18 +79,19 @@ function verifyJwt(token) {
 module.exports = { signJwt, verifyJwt };
 ```
 
-**`tests/auth.test.js`** — the self‑verifying target:
+**`tests/auth.test.js`** — five tests; only the round‑trip fails until the bug is fixed (the
+extra passing tests give the run enough output that the subagent‑vs‑inline contrast is visible):
 
 ```js
-// tests/auth.test.js
-const assert = require("node:assert");
-const { test } = require("node:test");
-const { signJwt, verifyJwt } = require("../src/auth/jwt");
-
+// tests/auth.test.js  (abridged — see sample-repo/ for the full file)
+test("signJwt returns a string", () => { /* passes */ });
+test("signJwt output has a separator", () => { /* passes */ });
+test("verifyJwt rejects a tampered token", () => { /* passes */ });
+test("verifyJwt rejects an empty token", () => { /* passes */ });
 test("round-trips a signed token", () => {
   const token = signJwt({ sub: "u_123" });
   const claims = verifyJwt(token);
-  assert.strictEqual(claims?.sub, "u_123"); // fails until the split bug is fixed
+  assert.strictEqual(claims?.sub, "u_123"); // the one that fails until the bug is fixed
 });
 ```
 
@@ -95,12 +105,17 @@ test("round-trips a signed token", () => {
 }
 ```
 
-Confirm it fails before you start (`npm test` → 1 failing). The **correct fix** is
-`token.split(".")` (drop the `, 1`). Keep that in your back pocket for Run B.
+Confirm it fails before you start (`npm test` → `tests 5 / pass 4 / fail 1`). The one‑line fix
+and the full answer key are in [`presenter-notes.md`](presenter-notes.md) — read it once, then
+present from memory.
 
-> Why a planted bug *and* a planted ambiguity? The bug gives `task` something real to catch;
-> the `validateToken` vs `verifyJwt` naming trap is what a vague prompt hallucinates toward —
-> that's the wrong turn you'll show the cost of.
+#### Why the fixture stays spoiler-free
+
+The scratch copy contains **no** solution comments and **no** README hint about the fix. That's
+deliberate: in Run A you add the *whole folder* as context, and a strong model that can see
+"the fix is `token.split(".")`" will just apply it — and your "wrong turn toward `validateToken`"
+beat never happens. Keeping the answer in [`presenter-notes.md`](presenter-notes.md) (outside
+`sample-repo/`, never copied to `$scratch`) preserves the room the model needs to wander in Run A.
 
 ---
 
@@ -130,10 +145,10 @@ beat is just "watch that number move."
 
 | What | Exact click‑path | What it tells you |
 |---|---|---|
-| **Context‑window indicator** | The ring / progress bar next to the Chat input box. **Hover** it for `current / max tokens`. | Live fill of the window. Starts **~35–40% pre‑filled** (system prompt + tool schemas + reserved output buffer) — that's your "fixed cost" bucket made visible. |
-| **Chat Debug View** | Chat panel → overflow menu **`···`** (top‑right of the panel) → **Show Chat Debug View**. | Per‑request `prompt_tokens`, `completion_tokens`, `total_tokens`, **and cached/reused counts**. This is *the* place to prove caching in VS Code. |
-| **Reasoning level** | Model picker dropdown under the Chat input → effort/reasoning selector. | Higher reasoning = more tokens/credits per turn (guide §B1). |
-| **Scoped context** | Type `#file:` (one file) vs. dragging a whole folder in. | Smaller, more precise context (guide §A4). |
+| **Context‑window indicator** | The ring / progress bar next to the Chat input box. **Hover** it for `current / max tokens`. | Live fill of the window. Starts **visibly pre‑filled** (system prompt + tool schemas + reserved output buffer) before you type — *record the actual % during rehearsal; it varies by model/context size.* |
+| **Chat Debug View** | Chat panel → overflow menu **`···`** (top‑right of the panel) → **Show Chat Debug View**. *(Label/location is version‑sensitive — confirm in your build.)* | Per‑request `prompt_tokens`, `completion_tokens`, `total_tokens`, **and cached/reused counts**. This is *the* place to prove caching in VS Code. |
+| **Reasoning level** | Model picker dropdown under the Chat input → effort/reasoning selector (if your model exposes one). | Higher reasoning = more tokens/credits per turn (guide §B1). |
+| **Scoped context** | **Add Context** → *Files & Folders* (or type `#` and pick the file) for one file, vs. dragging a whole folder in. | Smaller, more precise context (guide §A4). |
 
 ### Copilot CLI
 
@@ -209,13 +224,26 @@ and history are fresh). Now apply the guide.
 
 ### B‑2 · Plan + scope precisely — guide §A4/§A5
 
-- **VS Code:** `Shift+Tab` (or `/plan`) to agree the approach **before** editing. Add context
-  with `#file:src/auth/jwt.js` and `#file:tests/auth.test.js` — **just those two files**.
-- **CLI:** plan mode, then `@src/auth/jwt.js @tests/auth.test.js`.
+- **VS Code:** enter **Plan** (or Agent) mode from the chat mode picker *(verify the control/label
+  in your build — it may be `Shift+Tab` or a dropdown)* to agree the approach **before** editing.
+  Add **only** the two relevant files via **Add Context → Files & Folders**: `src/auth/jwt.js`
+  and `tests/auth.test.js`.
+- **CLI:** plan mode (`Shift+Tab`), then `@src/auth/jwt.js @tests/auth.test.js`.
 
-### B‑3 · Ground the ask (no room to hallucinate)
+### B‑3 · Recon with `explore` **before** editing — guide §A2 *(CLI strength)*
 
-Same surgical prompt on both surfaces:
+Cheap, read‑only recon prevents the expensive wrong turn. Run it **before** any edit:
+
+```
+explore: explain how verifyJwt is used end-to-end. Cite file:line. Do NOT edit anything.
+```
+
+→ `/context` after: **main history barely moves** — the agent's file‑reading stayed in its own
+window. (This is the beat the Naive run never gets.)
+
+### B‑4 · Ground the ask (no room to hallucinate)
+
+Now the surgical fix prompt — same on both surfaces:
 
 ```
 @src/auth/jwt.js @tests/auth.test.js
@@ -224,28 +252,36 @@ token.split(".", 1) drops the signature segment. Fix only verifyJwt in src/auth/
 test passes. Don't touch anything else. Done = `npm test` is green.
 ```
 
-### B‑4 · Offload the grunt work to subagents — guide §A2 *(CLI strength)*
+### B‑5 · Verify with `task`, and show the contrast — guide §A2
 
-- **CLI:** before the edit, use **`explore`** to confirm how `verifyJwt` is used ("explain, cite
-  file:line, don't edit"). After the edit, use **`task`** to run the tests:
+- **CLI:** after the edit, use **`task`** to run the tests:
   `run npm test and report pass/fail; full output only on failure`.
-  → `/context`: **main history barely moves** — the verbose test log stayed in the subagent.
-- **Contrast beat:** run the *same* test command **inline** (no `task` agent) and show
-  `/context`/`Chat Debug View` jump. **That delta is the punchline.**
+  → `/context`: history stays flat; the 5‑test output lived in the subagent.
+- **Contrast beat:** run the *same* `npm test` **inline** (no `task` agent) and show
+  `/context` / Chat Debug View jump. **That delta is the punchline.**
 
-### B‑5 · Right‑size effort — guide §B1
+> 📸 **Capture the Disciplined scoreboard now** (see [shot list](#7-screenshot-checklist-per-surface)).
+> Do it **before** the epilogue below — the next two steps deliberately change variables and bust
+> the cache, so they must not be inside the measured A/B comparison.
 
-- Drop reasoning `max → medium` for this mechanical edit (VS Code picker / CLI `/model`).
-  → Fewer reasoning tokens, identical fix. Keep `max` for genuinely hard work.
+---
 
-### B‑6 · One‑command frugal switch
+### Epilogue (optional, *not* part of the measured A/B)
+
+These show extra levers, but each one busts the prompt cache (guide §A1/§B1) — that's why they
+come **after** you've captured the Run B numbers.
+
+**E‑1 · Right‑size effort — guide §B1.** Drop reasoning `max → medium` for a mechanical edit
+(VS Code picker / CLI `/model`) → fewer reasoning tokens, identical fix. Keep `max` for hard work.
+
+**E‑2 · One‑command frugal switch.** From the **repo root** (not `$scratch`):
 
 ```powershell
-./scripts/switch-profile.ps1 lean
+.\scripts\switch-profile.ps1 lean
 ```
 
-Re‑run `explore`/`task` → same workflow, cheaper models (Sonnet main + GPT‑5‑mini/5.4‑mini
-subagents). **Capture the final scoreboard.**
+Re‑run `explore` / `task` → same workflow, cheaper models (Sonnet main + GPT‑5‑mini / 5.4‑mini
+subagents).
 
 ---
 
@@ -284,11 +320,11 @@ keep Run A and Run B shots in separate folders so the reveal is a clean pair.
 
 ### VS Code
 
-- [ ] `vscode-00-baseline-ring.png` — empty chat, ring already ~35–40% (hover tooltip visible).
+- [ ] `vscode-00-baseline-ring.png` — empty chat, ring already visibly pre‑filled (hover tooltip visible).
 - [ ] `vscode-01-naive-folder.png` — whole folder added, ring jumped.
 - [ ] `vscode-02-naive-debugview.png` — Chat Debug View with climbing `total_tokens` after retries.
 - [ ] `vscode-03-cache-busted.png` — Debug View after mid‑thread model switch (cached ≈ 0).
-- [ ] `vscode-04-disciplined-scoped.png` — `#file:` two files only, lower ring.
+- [ ] `vscode-04-disciplined-scoped.png` — two files only (Add Context), lower ring.
 - [ ] `vscode-05-disciplined-debugview.png` — final Debug View, high cached / low total.
 - [ ] `vscode-06-reveal.png` — A vs B side by side.
 
@@ -310,14 +346,15 @@ keep Run A and Run B shots in separate folders so the reveal is a clean pair.
 |---|---|---|---|
 | Scoreboards | Where to look | Both | 2 min |
 | Run A‑1…A‑4 | Naive: bloat, vague, ride, cache‑bust | VS Code → CLI | 6 min |
-| Run B‑1…B‑3 | Trim, plan, ground | VS Code → CLI | 4 min |
-| Run B‑4 | Subagents + inline contrast | CLI | 3 min |
-| Run B‑5…B‑6 | Effort + lean switch | Both | 1 min |
-| Reveal | Side‑by‑side | Slide | 1 min |
+| Run B‑1…B‑2 | Trim tools, plan + scope | VS Code → CLI | 3 min |
+| Run B‑3…B‑5 | Recon (`explore`) → fix → verify (`task`) + inline contrast | CLI | 4 min |
+| Reveal | Side‑by‑side (capture **before** the epilogue) | Slide | 1 min |
+| Epilogue (optional) | Effort drop + lean switch | Both | 1 min |
 
 **One‑breath summary if you're short on time:** *baseline ring → drag whole folder (jumps) →
-vague prompt (wrong turn) → switch model (cache dies) → new session, `#file:` two files +
-grounded prompt + `task` agent → counters stay flat → side by side.*
+vague prompt (wrong turn) → switch model (cache dies) → new session, scope two files +
+`explore` recon → grounded prompt → `task` to verify → counters stay flat → capture → side by
+side.*
 
 ---
 

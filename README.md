@@ -87,7 +87,8 @@ copilot-token-efficiency/
 │   └── copilot-instructions.md     # Context-discipline custom instructions
 ├── demo/
 │   ├── demo-flow.md                # Live demo script — show the token save (VS Code + CLI)
-│   └── sample-repo/                # Runnable fixture (1 failing auth test, planted bug)
+│   ├── presenter-notes.md          # Answer key for the demo (kept out of the fixture)
+│   └── sample-repo/                # Runnable fixture (5 tests, 1 failing by design)
 └── scripts/
     ├── switch-profile.ps1          # Apply lean/power (with backup)
     ├── check-usage.ps1             # Token-posture dashboard (read-only)
