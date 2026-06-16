@@ -101,6 +101,37 @@ You can hold a large window without dropping info:
   summarising, nudge the threshold to **~0.85–0.88** (not higher) and confirm via `/context`.
 - A concise, **stable** `copilot-instructions.md` steers every turn and stays cached (A1).
 
+## A7. Keep heavy tool *output* out of the main thread
+
+A3 trims tool **definitions**; this is about tool **output**. A big result — a 20KB file
+dump, a long test log, a wide search, a large web fetch — gets written into history and
+then **re-billed at the cache-read rate on every later turn**. One noisy read quietly taxes
+the rest of the session.
+
+- **Read narrowly.** Prefer `view_range`, `grep`, or a targeted `@file` over dumping a whole
+  file/directory into the main thread — better grounding *and* fewer tokens (same idea as A4).
+- **Offload the noise.** Route verbose work (test runs, builds, wide searches) to a subagent
+  (A2) so only the **summary** returns to your thread.
+- **Don't paste large blobs** when a scoped reference will do — pasted bulk lands in history
+  and is re-sent every turn.
+
+Zero quality loss: the model keeps every *relevant* fact, just not the surrounding noise.
+
+## A8. Carry knowledge across sessions with `/memory`
+
+The rest of this guide is single-session; memory is the **cross-session** lever. Stored facts
+(conventions, build/test commands, preferences) persist across sessions, so you don't burn
+tokens **re-explaining the same context every time you start fresh**.
+
+- **The cost:** stored memories are injected into the prefix — a small, *recurring* per-turn
+  cost, and part of the cached prefix (A1). Keep them few and high-signal.
+- **The payoff:** one stored *"build with `npm run build`, test with `npm test`"* beats
+  re-typing it (and the agent re-discovering it) in every new session.
+- **Manage it:** `/memory` shows status and enables/disables cross-session memory; prune stale
+  entries so you're not paying every turn for facts you no longer need.
+
+Net: a Tier-A win **across** sessions as long as you keep the stored set lean.
+
 ---
 
 # Tier B — Worth-it tradeoffs (may lower quality)
@@ -125,6 +156,9 @@ far cheaper but less capable on hard problems.
 - **Worth it:** simple edits, file lookups, format conversions, quick questions.
 - **Not worth it:** complex reasoning, subtle bugs — keep Opus/GPT‑5.5 there.
 - Route per-subagent so grunt work goes cheap while the main agent stays strong (see profiles).
+- **Let Copilot route for you:** `/model auto` picks the model automatically per turn instead of
+  switching by hand — it hands the B1/B2 choice to the CLI. Handy when you'd rather not
+  micromanage; pin a specific model when you need predictable cost/quality.
 
 ## B3. Compact stale history manually
 
@@ -278,3 +312,6 @@ subsequent turn; "catch & recover" eats a single cache reset and moves on.
 | Reclaim a stale window | `/compact` | B |
 | Avoid wrong turns | plan mode, `@file`, `explore` / `rubber-duck`, `/rewind` early | A |
 | Per-subagent routing | `subagents.agents.<name>` in `settings.json` | A/B |
+| Keep heavy output out of context | narrow reads (`view_range`, grep); subagents | A |
+| Reuse context across sessions | `/memory` | A |
+| Auto-route the model | `/model auto` | B |
