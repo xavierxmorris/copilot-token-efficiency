@@ -26,6 +26,10 @@ The guide is split into two tiers so you never sacrifice answer quality by accid
    auto-compaction on (threshold ~0.85–0.88), don't disable it.
 4. **Trim only *unused* MCP tool definitions** (before the session — toggling mid-session busts the cache).
 5. **Lower effort for routine work** (Tier B) — `xhigh → high/medium` saves the most reasoning tokens; keep `xhigh`/`max` for hard tasks.
+6. **Avoid wrong turns — the biggest hidden cost.** A bad approach pollutes context and re-bills
+   (at cache-read rate) on *every* later turn, anchors the model, and forces correction + cleanup —
+   often **3–10× cost** plus a quality drop. Prevent with plan mode + `@file` + `explore`/`rubber-duck`;
+   `/rewind` early to excise it. See the guide's *"real cost of a wrong turn"* section.
 
 Full details: [`docs/token-efficiency-guide.md`](docs/token-efficiency-guide.md) ·
 Caching deep dive: [`docs/prompt-caching.md`](docs/prompt-caching.md) ·

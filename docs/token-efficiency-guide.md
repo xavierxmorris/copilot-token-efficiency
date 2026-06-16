@@ -143,6 +143,57 @@ A cost-vs-fidelity trade; pick per session.
 
 ---
 
+## The real cost of a wrong turn
+
+A "wrong turn" — the agent picks a bad approach, edits the wrong file, hallucinates an
+API, or misreads the task — is the **most expensive event** in agentic AI. Its cost is
+rarely 1×; it compounds:
+
+| Hidden cost | Why it hurts |
+|---|---|
+| **The wasted turn** | Reasoning + output + tool calls for work you throw away. At Opus `xhigh`, one big wrong turn can be thousands of output tokens at the high output rate. |
+| **Context pollution (the big one)** | The wrong turn **stays in history**. Every later turn re-sends it — and once cached, you pay cache-read on garbage *every turn for the rest of the session*. |
+| **Anchoring / quality drop** | The model sees its own earlier wrong reasoning and tends to stay consistent with it → worse answers downstream. A wrong turn doesn't just cost tokens, it **lowers quality**. |
+| **Correction turns** | You explain the mistake, it re-reads, re-reasons, re-does — typically 2–3× the original work. |
+| **Cleanup + cache reset** | Reverting bad edits, and `/rewind` / `/undo` to excise the turn, **bust the prompt cache** — so the next turn re-bills full input price. |
+
+**Rule of thumb:** once pollution, correction, and cleanup are counted, a wrong turn
+often costs **3–10× its own tokens** — and it quietly degrades every answer after it.
+
+### How to minimize wrong turns
+
+**Prevent (cheapest):**
+1. **Plan first** — plan mode (`Shift+Tab`) / `/plan` to agree the approach before any code.
+   A wrong *plan* costs a few hundred tokens; a wrong *implementation* costs thousands + cleanup.
+2. **Ground it precisely** with `@file` — most wrong turns come from missing/wrong context or
+   guessed assumptions. Give exact files; make ambiguous decisions explicit.
+3. **State "done"** — clear acceptance criteria up front prevent the #1 cause: ambiguity.
+4. **Make it ask, not guess** — for ambiguous forks, a cheap clarifying question beats an
+   expensive wrong guess.
+5. **De-risk with cheap agents** — `explore` (cheap) to verify how the code works *before* the
+   expensive main agent edits; `rubber-duck` to sanity-check a plan before implementing.
+
+**Catch early:**
+6. **Watch and `Esc`** — stop a bad trajectory the moment you see it; don't let a long wrong
+   turn finish.
+7. **Reject with feedback** — when it proposes a wrong action, choose "No, and tell Copilot what
+   to do differently" and steer inline, rather than letting it act then fixing.
+8. **Verify each step** — have the `task` agent run tests/builds so a wrong turn fails *now*, not
+   five turns later. Keep steps small and checkable.
+
+**Contain the damage:**
+9. **Excise, don't layer.** When a turn is clearly wrong, **`/rewind` or `/undo` to remove it**
+   rather than appending corrections on top of the garbage. Yes, rewind resets the cache — but the
+   polluted prefix would otherwise be re-billed (and keep biasing the model) *every* future turn,
+   so removing it early is usually the cheaper, higher-quality choice.
+10. **Commit known-good checkpoints** (git) so reverting bad file edits is one command, not manual.
+
+> Where quality and cost align: a wrong turn is the rare thing that is both expensive *and*
+> quality-lowering. The cheap prevention levers above (plan mode, `@file`, `explore` / `rubber-duck`)
+> are the highest-ROI habits in this whole guide.
+
+---
+
 ## Quick reference
 
 | Goal | Command / setting | Tier |
@@ -155,4 +206,5 @@ A cost-vs-fidelity trade; pick per session.
 | Keep max context | `contextTier: long_context` (when needed); threshold ~0.85–0.88 | A |
 | Cheaper turns | `/model`, `effortLevel` (high/medium for routine) | B |
 | Reclaim a stale window | `/compact` | B |
+| Avoid wrong turns | plan mode, `@file`, `explore` / `rubber-duck`, `/rewind` early | A |
 | Per-subagent routing | `subagents.agents.<name>` in `settings.json` | A/B |
