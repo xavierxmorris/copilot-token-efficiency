@@ -30,9 +30,14 @@ The guide is split into two tiers so you never sacrifice answer quality by accid
    (at cache-read rate) on *every* later turn, anchors the model, and forces correction + cleanup —
    often **3–10× cost** plus a quality drop. Prevent with plan mode + `@file` + `explore`/`rubber-duck`;
    `/rewind` early to excise it. See the guide's *"real cost of a wrong turn"* section.
+7. **Route cheap models to the right jobs.** Haiku / GPT‑5 mini / Gemini Flash match frontier
+   models on scoped, verifiable, high‑volume work (explore, run tests, summarize, pattern edits)
+   at a fraction of the cost — run them as **isolated subagents** so only summaries return. See
+   [`docs/lower-tier-models.md`](docs/lower-tier-models.md).
 
 Full details: [`docs/token-efficiency-guide.md`](docs/token-efficiency-guide.md) ·
 Caching deep dive: [`docs/prompt-caching.md`](docs/prompt-caching.md) ·
+Lower-tier models: [`docs/lower-tier-models.md`](docs/lower-tier-models.md) ·
 Reference setup analysis: [`docs/your-setup-analysis.md`](docs/your-setup-analysis.md).
 
 ## Two switchable profiles
@@ -73,6 +78,7 @@ copilot-token-efficiency/
 ├── docs/
 │   ├── token-efficiency-guide.md   # Tier A (zero loss) + Tier B (tradeoffs)
 │   ├── prompt-caching.md           # Input-token caching deep dive + how to max it
+│   ├── lower-tier-models.md        # Max capability + efficiency from cheap/fast models
 │   └── your-setup-analysis.md      # Findings for the reference setup
 ├── examples/
 │   ├── settings.power.json         # Opus 4.8 max + GPT-5.5 xhigh profile

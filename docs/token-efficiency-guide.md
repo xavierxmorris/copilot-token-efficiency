@@ -192,6 +192,76 @@ often costs **3–10× its own tokens** — and it quietly degrades every answer
 > quality-lowering. The cheap prevention levers above (plan mode, `@file`, `explore` / `rubber-duck`)
 > are the highest-ROI habits in this whole guide.
 
+### Spotting & recovering from wrong turns
+
+The cheapest wrong turn is the one you catch in its first few seconds. The recurring
+industry term for the slow version is **context rot** — context quietly drifting or
+filling with dead-ends until answers degrade.
+
+**Spot the thrash early.** Tell-tale signs:
+- Repeated *"let me try a different approach"* / the same test failing twice.
+- Tool calls erroring in a cycle (same command, same failure).
+- The agent editing or "fixing" a file it never read.
+- Confident references to APIs, flags, or paths that don't exist.
+
+> **Two-strikes rule:** if it fails the *same* fix twice, stop and `/rewind` — don't let it
+> try a third variant. Each failed attempt pollutes the prefix and re-bills every later turn.
+
+**Give it an error memory.** Agents happily re-attempt dead-ends. When something fails,
+state it explicitly and correct *surgically*:
+
+```
+✗ Vague:    "That's wrong, try again."
+✓ Surgical: "validateToken() doesn't exist — the helper is verifyJwt() in src/auth/jwt.ts.
+            Don't reintroduce validateToken; use verifyJwt and leave the routes alone."
+```
+
+**Rehydrate from ground truth.** When context feels drifted, re-anchor on the source of
+truth instead of the model's memory:
+
+```
+@src/auth/jwt.ts @tests/auth.test.ts — here's the actual code and the tests it must pass.
+Re-read these; ignore earlier assumptions.
+```
+For library/API facts, pull current docs (Microsoft Learn / Context7) rather than letting it
+invent — most "confident but wrong" turns are stale-memory hallucinations.
+
+**Limit the blast radius.**
+- Scope the files it may touch: *"Only edit `src/payments/`. Don't modify anything else."*
+- Keep diffs small and **commit known-good checkpoints** so a revert is one command.
+- **One task per session.** Batching unrelated asks means one wrong sub-task pollutes them
+  all and can't be cleanly rewound. Start a **fresh session** for a new task → clean anchors
+  *and* a clean cache prefix.
+
+**Cost asymmetry — sometimes spend *more* to avoid a wrong turn.** A clarifying question or a
+plan review is hundreds of tokens; a wrong implementation + correction is thousands plus
+cleanup. For ambiguous or high-stakes work, a higher-effort or better model *up front* is the
+cheaper bet — the wrong-turn math dominates.
+
+**Structural guardrails.**
+- **TDD:** write the failing test first — a concrete, self-verifying target stops wandering
+  and catches a wrong turn immediately.
+- **Audit `AGENTS.md` / instructions:** stale or wrong repo instructions cause *systematic*
+  wrong turns every session. Keep them accurate and lean.
+- **Plan / read-only mode for exploration** so it can't make destructive edits while it's
+  still figuring things out.
+- **Watch `/usage` and `/context`:** rising tokens + many tool calls = wrong turns piling up.
+  Decide to `/rewind` or start fresh.
+
+#### Worked example — let-it-ride vs catch-and-recover
+
+| Turn | Let it ride ❌ | Catch & recover ✅ |
+|---|---|---|
+| T1 | Vague ask, no files given | `/plan` + `@file`, acceptance criteria stated |
+| T2 | Guesses an API, edits 4 files | Reads the file first; one scoped edit |
+| T3 | Test fails | Test fails |
+| T4 | "Let me try another way" (×3) | **Second failure → `/rewind` to T2**, give the correct API |
+| T5 | You explain; it re-reads everything | One clean retry; tests pass |
+| **Net cost** | wasted T2–T4 + that pollution re-billed *every* later turn + correction | one cache reset (the rewind) + one good turn |
+
+Same bug, very different bill: "let it ride" keeps paying for the polluted T2–T4 on every
+subsequent turn; "catch & recover" eats a single cache reset and moves on.
+
 ---
 
 ## Quick reference
