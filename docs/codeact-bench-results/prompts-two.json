@@ -1,0 +1,14 @@
+[
+  {
+    "id": "md-heading-index-realrepo",
+    "prompt": "For every Markdown file in this repository, report the file path, its H1 title (first line starting with '# '), and the number of H2 sections (lines starting with '## '). Then list any markdown files that have no H1 title. End with the total number of H2 sections across all files. One line per file.",
+    "description": "Fan-out: glob all .md (9 files) + view each + parse headings. Direct comparison to the as-shipped run.",
+    "min_token_reduction": 0
+  },
+  {
+    "id": "all-files-inventory-realrepo",
+    "prompt": "For every file in this repository (all extensions, excluding the .git directory), report its path, its line count, and whether it contains the word 'token' (case-insensitive). Sort the list by line count descending. At the end, print the total number of files and the total number of lines. One line per file.",
+    "description": "Stronger fan-out: read all ~20 files + per-file line count + keyword check. Baseline must read every file sequentially.",
+    "min_token_reduction": 0
+  }
+]

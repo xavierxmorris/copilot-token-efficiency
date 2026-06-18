@@ -38,7 +38,8 @@ The guide is split into two tiers so you never sacrifice answer quality by accid
 Full details: [`docs/token-efficiency-guide.md`](docs/token-efficiency-guide.md) ·
 Caching deep dive: [`docs/prompt-caching.md`](docs/prompt-caching.md) ·
 Lower-tier models: [`docs/lower-tier-models.md`](docs/lower-tier-models.md) ·
-Reference setup analysis: [`docs/your-setup-analysis.md`](docs/your-setup-analysis.md).
+Reference setup analysis: [`docs/your-setup-analysis.md`](docs/your-setup-analysis.md) ·
+CodeAct on Windows (hands-on eval): [`docs/codeact-windows-evaluation.md`](docs/codeact-windows-evaluation.md).
 
 ## Two switchable profiles
 

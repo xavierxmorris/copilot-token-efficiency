@@ -1,0 +1,77 @@
+{
+  "timestamp": "20260618T034732Z",
+  "min_token_reduction": 0,
+  "results": [
+    {
+      "prompt_id": "md-heading-index-realrepo",
+      "status": "valid",
+      "baseline_tokens": 730,
+      "codeact_tokens": 856,
+      "token_reduction_pct": -17.3,
+      "baseline_input_tokens": 0,
+      "codeact_input_tokens": 0,
+      "input_token_reduction_pct": 0,
+      "baseline_cost_est": 0.01095,
+      "codeact_cost_est": 0.01284,
+      "cost_reduction_pct": -17.3,
+      "baseline_requests": 1,
+      "codeact_requests": 1,
+      "request_reduction_pct": 0.0,
+      "baseline_tool_calls": 3,
+      "codeact_tool_calls": 2,
+      "tool_reduction_pct": 33.3,
+      "baseline_turns": 3,
+      "codeact_turns": 2,
+      "turn_reduction_pct": 33.3,
+      "baseline_context_bytes": 2502,
+      "codeact_context_bytes": 3121,
+      "context_reduction_pct": -24.7,
+      "codeact_invoked": true,
+      "baseline_tools": [
+        "report_intent",
+        "bash",
+        "bash"
+      ],
+      "codeact_tools": [
+        "report_intent",
+        "bash"
+      ],
+      "min_token_reduction": 0
+    },
+    {
+      "prompt_id": "all-files-inventory-realrepo",
+      "status": "valid",
+      "baseline_tokens": 846,
+      "codeact_tokens": 1095,
+      "token_reduction_pct": -29.4,
+      "baseline_input_tokens": 0,
+      "codeact_input_tokens": 0,
+      "input_token_reduction_pct": 0,
+      "baseline_cost_est": 0.01269,
+      "codeact_cost_est": 0.016425,
+      "cost_reduction_pct": -29.4,
+      "baseline_requests": 1,
+      "codeact_requests": 1,
+      "request_reduction_pct": 0.0,
+      "baseline_tool_calls": 2,
+      "codeact_tool_calls": 2,
+      "tool_reduction_pct": 0.0,
+      "baseline_turns": 2,
+      "codeact_turns": 2,
+      "turn_reduction_pct": 0.0,
+      "baseline_context_bytes": 3800,
+      "codeact_context_bytes": 3988,
+      "context_reduction_pct": -4.9,
+      "codeact_invoked": true,
+      "baseline_tools": [
+        "report_intent",
+        "bash"
+      ],
+      "codeact_tools": [
+        "report_intent",
+        "bash"
+      ],
+      "min_token_reduction": 0
+    }
+  ]
+}

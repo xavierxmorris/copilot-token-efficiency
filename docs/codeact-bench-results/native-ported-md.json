@@ -1,0 +1,49 @@
+{
+  "timestamp": "20260618T042356Z",
+  "min_token_reduction": 0,
+  "results": [
+    {
+      "prompt_id": "md-heading-index-realrepo",
+      "status": "valid",
+      "baseline_tokens": 1246,
+      "codeact_tokens": 4215,
+      "token_reduction_pct": -238.3,
+      "baseline_input_tokens": 112825,
+      "codeact_input_tokens": 479926,
+      "input_token_reduction_pct": -325.4,
+      "baseline_cost_est": 0.300752,
+      "codeact_cost_est": 1.26304,
+      "cost_reduction_pct": -320.0,
+      "baseline_requests": 15,
+      "codeact_requests": 15,
+      "request_reduction_pct": 0.0,
+      "baseline_tool_calls": 2,
+      "codeact_tool_calls": 10,
+      "tool_reduction_pct": -400.0,
+      "baseline_turns": 3,
+      "codeact_turns": 11,
+      "turn_reduction_pct": -266.7,
+      "baseline_context_bytes": 5794,
+      "codeact_context_bytes": 0,
+      "context_reduction_pct": 100.0,
+      "codeact_invoked": true,
+      "baseline_tools": [
+        "glob",
+        "powershell"
+      ],
+      "codeact_tools": [
+        "powershell",
+        "powershell",
+        "skill",
+        "task",
+        "powershell",
+        "glob",
+        "grep",
+        "sql",
+        "view",
+        "powershell"
+      ],
+      "min_token_reduction": 0
+    }
+  ]
+}

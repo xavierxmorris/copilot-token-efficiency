@@ -1,0 +1,8 @@
+[
+  {
+    "id": "md-heading-index-realrepo",
+    "prompt": "For every Markdown file in this repository, report the file path, its H1 title (first line starting with '# '), and the number of H2 sections (lines starting with '## '). Then list any markdown files that have no H1 title. End with the total number of H2 sections across all files. One line per file.",
+    "description": "Fan-out: glob all .md (9 files) + view each + parse headings. Complete-port re-run for a saved, citable result.",
+    "min_token_reduction": 0
+  }
+]
