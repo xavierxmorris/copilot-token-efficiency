@@ -97,8 +97,7 @@ You can hold a large window without dropping info:
   per‑token price — use it when you genuinely need the room, not by default.)*
 - The CLI auto-compacts in the background at **~80%** of the token limit by default
   (buffer exhaustion at 95%, default limit 128k). **Keep auto-compaction enabled** (disabling
-  it risks a hard truncation/stop at the limit). If you want it to retain more before
-  summarising, nudge the threshold to **~0.85–0.88** (not higher) and confirm via `/context`.
+  it risks a hard truncation/stop at the limit). 
 - A concise, **stable** `copilot-instructions.md` steers every turn and stays cached (A1).
 
 ## A7. Keep heavy tool *output* out of the main thread
